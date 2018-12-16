@@ -7,7 +7,6 @@ mod tokio_playground;
 
 use self::bank_client::{Currency, get_currency};
 
-
 // add some logging, preferably via log@0.4.6, log4rs or !simplelog.rs
 
 #[get("/<name>/<age>")]

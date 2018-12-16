@@ -2,60 +2,55 @@
 
 #[macro_use] extern crate rocket;
 
-extern crate hyper;
+mod bank_client;
+mod tokio_playground;
 
-use hyper::Client;
-use hyper::rt::{self, Future, Stream};
+use self::bank_client::{Currency, get_currency};
+
 
 // add some logging, preferably via log@0.4.6, log4rs or !simplelog.rs
 
 #[get("/<name>/<age>")]
 fn hello(name: String, age: i32) -> String {
+    let eur_value = get_currency(Currency::EUR);
+    let message = match eur_value {
+        Ok(currency) => currency.to_string(),
+        Err(error) => error
+    };
 
-    format!("Hello, {} year old named {}!", age, name)
+    format!("Hello, {} year old named {}! Eur jest po: {}", age, name, message)
 }
 
 fn main() {
     rocket::ignite().mount("/hello", routes![hello]).launch();
 }
 
-fn make_request() {
-    let client = Client::new();
+extern crate futures;
 
-    let fut = client
+#[cfg(test)]
+#[macro_use]
+extern crate pretty_assertions;
 
-        // Make a GET /ip to 'http://httpbin.org'
-        .get("http://httpbin.org/ip".parse().unwrap())
+#[cfg(test)]
+mod tests { 
 
-        // And then, if the request gets a response...
-        .and_then(|res| {
-            println!("status: {}", res.status());
+    pub fn add(a: i32, b: i32) -> i32 {
+        a + b
+    }
 
-            // Concatenate the body stream into a single buffer...
-            // This returns a new future, since we must stream body.
-            res.into_body().concat2()
-        })
+    #[test]
+    fn test_add() {
+        assert_eq!(add(2, 3), 5);
+    }
 
-        // And then, if reading the full body succeeds...
-        .and_then(|body| {
-            // The body is just bytes, but let's print a string...
-            let s = ::std::str::from_utf8(&body)
-                .expect("httpbin sends utf-8 JSON");
+    #[test]
+    fn main3() {
+        use futures::Future;
+        
+        let future = futures::future::ok::<i32, i32>(10);
+        let mapped = future.map(|i| i * 3);
 
-            println!("body: {}", s);
-
-            // and_then requires we return a new Future, and it turns
-            // out that Result is a Future that is ready immediately.
-            Ok(())
-        })
-
-        // Map any errors that might have happened...
-        .map_err(|err| {
-            println!("error: {}", err);
-        });
-
-    // A runtime is needed to execute our asynchronous code. In order to
-    // spawn the future into the runtime, it should already have been
-    // started and running before calling this code.
-    rt::spawn(fut);
+        let expected = Ok(30);
+        assert_eq!(mapped.wait(), expected);
+    }
 }

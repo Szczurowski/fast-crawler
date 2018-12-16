@@ -4,7 +4,7 @@ extern crate tokio_executor;
 #[allow(dead_code)]
 fn dox() {
     use futures::future::lazy;
-    use tokio_executor::{ spawn, DefaultExecutor, Executor };
+    use tokio_executor::{ DefaultExecutor, Executor };
 
     let lazy_future = lazy(|| {
         println!("running on the default executor");
